@@ -10,9 +10,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)   
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 
-# Actual source code
-add_subdirectory(ecs)
-
 option(ENABLE_TESTING "Enable unit testing" ON)
 if (ENABLE_TESTING)
     include_directories(thirdparty/Catch2/single_include)

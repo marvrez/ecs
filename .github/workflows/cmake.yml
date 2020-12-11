@@ -31,4 +31,4 @@ jobs:
     - name: Test
       working-directory: ${{runner.workspace}}/build
       shell: bash
-      run: ./bin/ecs-tests
+      run: ./bin/ecs-tests -s
