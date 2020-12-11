@@ -12,6 +12,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
 
     - name: Create Build Directory
       run: cmake -E make_directory ${{runner.workspace}}/build
