@@ -94,7 +94,7 @@ template <typename T>
 inline const T& PackedComponentStorage<T>::GetComponent(Entity entity) const
 {
     if (!HasComponent(entity)) throw std::runtime_error("ComponentCollection: Entity does not contain the specific component");
-    const ComponentIndex idx = m_component_index[entity];
+    const ComponentIndex idx = m_component_index.find(entity)->second;
     return m_components[idx];
 }
 
@@ -117,9 +117,9 @@ inline void PackedComponentStorage<T>::RemoveComponent(Entity entity)
         const ComponentIndex free_idx = m_component_index[entity];
         std::swap(m_components[free_idx], m_components[last_idx]);
 
-        for (auto& [entity, idx] : m_component_index) {
-            if (idx == last_idx) {
-                idx = free_idx;
+        for (auto& entity_idx : m_component_index) {
+            if (entity_idx.second == last_idx) {
+                entity_idx.second = free_idx;
                 break;
             }
         }
