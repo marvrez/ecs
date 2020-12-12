@@ -3,6 +3,7 @@
 
 #include "ecs/common.h"
 #include "ecs/component.h"
+#include "ecs/entity.h"
 #include "ecs/system.h"
 
 #include <thirdparty/taskflow/taskflow/taskflow.hpp>
@@ -87,6 +88,9 @@ private:
 
     tf::Taskflow m_taskflow;
     tf::Executor m_executor;
+
+    friend class EntityQuery;
+    friend class ComponentAccess;
 };
 
 template <typename ComponentT, typename StorageT>
