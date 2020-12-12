@@ -20,9 +20,45 @@ namespace ecs
 // Provides primary ECS interface for the user.
 // Registry hosts all ECS data and provides an interface to all clients.
 class Registry {
+private:
+    // Helper class for easier entities construction.
+    // Registry returns EntityBuilder as a result of CreateEntity method, which conveniently allows for chain-calls.
+    // E.g., registry.CreateEntity().AddComponent<Foo>().AddComponent<Bar>().Build();
+    class EntityBuilder {
+    public:
+        EntityBuilder(EntityBuilder&) = delete;
+        EntityBuilder& operator=(EntityBuilder&) = delete;
+
+        // Add component of a given type.
+        template <typename ComponentT>
+        EntityBuilder& AddComponent()
+        {
+            m_registry.AddComponent<ComponentT>(m_entity);
+            return *this;
+        }
+
+        // Build entity (i.e., return its id).
+        Entity Build() const noexcept { return m_entity; }
+    private:
+        // Only Registry can create EntityBuiler's.
+        EntityBuilder(Entity entity, Registry& registry) noexcept : m_entity(entity), m_registry(registry) {}
+
+        // Entity of interest.
+        Entity m_entity = INVALID_ENTITY;
+        Registry& m_registry;
+
+        friend class Registry;
+    };
 public:
     Registry()  = default;
     ~Registry() = default;
+
+    // Create an empty entity and returns a builder instance which can be used to add components.
+    // E.g., registry.CreateEntity().AddComponent<Foo>().AddComponent<Bar>().Build().
+    EntityBuilder CreateEntity();
+
+    // Destroys an entity along with its components.
+    void DestroyEntity(Entity entity);
 
     // Register component type.
     template <typename ComponentT, typename StorageT = PackedComponentStorage<ComponentT>>
@@ -38,23 +74,15 @@ public:
     template <typename ComponentT>
     ComponentT& GetComponent(Entity entity) { return GetComponentStorage<ComponentT>().GetComponent(entity); }
 
-    // Get a reference to a component given its index
-    // A type should be registered in the Registry and otherwise std::runtime_error is thrown.
-    // index argument should be < than GetNumComponents<ComponentT>()
+    // Check if an entity has a component of a given type.
+    // A type must be registered in the Registry, otherwise std::runtime_error is thrown.
     template <typename ComponentT>
-    ComponentT& GetComponentByIndex(ComponentIndex idx) { return GetComponentStorage<ComponentT>()[idx]; }
-    template <typename ComponentT>
-    const ComponentT& GetComponentByIndex(ComponentIndex idx) const { return GetComponentStorage<ComponentT>()[idx]; }
+    bool HasComponent(Entity entity) {  return GetComponentStorage<ComponentT>().HasComponent(entity); }
 
     // Get total number of components of a given ComponentT.
     // A type should be registered in the Registry and otherwise std::runtime_error is being thrown.
     template <typename ComponentT>
     size_t GetNumComponents() { return GetComponentStorage<ComponentT>().Size(); }
-
-     // Register a system.
-     // It is not possible to have two systems of the same type in Registry as they are indexed by their type.
-    template <typename SystemT, typename... Args>
-    void RegisterSystem(Args&&... args);
 
     // Run one step of an execution.
     // During one step of an execution each registered system is called exactly
@@ -64,6 +92,11 @@ public:
     // Wipe out all the component and systems. 
     // Registry to its initial state as if nothing has been registered and executed.
     void Reset();
+
+    // Register a system.
+    // It is not possible to have two systems of the same type in Registry as they are indexed by their type.
+    template <typename SystemT, typename... Args>
+    void RegisterSystem(Args&&... args);
 
     // Get a reference to a system.
     template <typename SystemT>
@@ -80,9 +113,6 @@ private:
     // If type is not registered, throws std::runtime_error.
     template <typename ComponentT, typename StorageT = PackedComponentStorage<ComponentT>>
     StorageT& GetComponentStorage();
-
-    // Each time entity space is out, we extend an array by this number of elements.
-    static constexpr uint32_t ENTITY_SIZE_INCREMENT = 128;
 
     // Data associated with a system.
     struct SystemInvocation {
@@ -105,6 +135,22 @@ private:
 
     friend class EntityQuery;
     friend class ComponentAccess;
+};
+
+// An interface providing access to components for System subclasses, guarding the Registry from unattended access.
+class ComponentAccess {
+public:
+    // Request component storage for write access.
+    template <typename ComponentT, typename StorageT = PackedComponentStorage<ComponentT>>
+    StorageT& Write() { return m_registry.GetComponentStorage<ComponentT>(); }
+    // Request component storage for read access.
+    template <typename ComponentT, typename StorageT = PackedComponentStorage<ComponentT>>
+    const StorageT& Read() const { return m_registry.GetComponentStorage<ComponentT>(); }
+private:
+    // Only registry can create these objects.
+    explicit ComponentAccess(Registry& registry) noexcept : m_registry(registry) {}
+    Registry& m_registry;
+    friend class Registry;
 };
 
 template <typename ComponentT, typename StorageT>

@@ -1,10 +1,10 @@
 add_library(${CMAKE_PROJECT_NAME} STATIC
     ecs.h
     common.h
-    component.cpp
     component.h
     entity.cpp
     entity.h
+    registry.cpp
     registry.h
     system.h
 )

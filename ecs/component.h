@@ -54,28 +54,12 @@ public:
     T& AddComponent(Entity entity);
 
     // Access component by idx.
-    T&       operator[](ComponentIndex idx)	        { return m_components[idx]; }
-    const T& operator[](ComponentIndex idx) const   { return m_components[idx]; }
+    T&       operator[](ComponentIndex idx)       { return m_components[idx]; }
+    const T& operator[](ComponentIndex idx) const { return m_components[idx]; }
 
 private:
     std::unordered_map<Entity, ComponentIndex> m_component_index;
     std::vector<T>                             m_components;
-};
-
-// An interface providing access to components for System subclasses, guarding the Registry from unattended access.
-class ComponentAccess {
-public:
-    // Request component storage for write access.
-    template <typename ComponentT, typename StorageT = PackedComponentStorage<ComponentT>>
-    StorageT& Write();
-    // Request component storage for read access.
-    template <typename ComponentT, typename StorageT = PackedComponentStorage<ComponentT>>
-    const StorageT& Read() const;
-private:
-    // Only registry can create these objects.
-    explicit ComponentAccess(Registry& registry) noexcept : m_registry(registry) {}
-    Registry& m_registry;
-    friend class Registry;
 };
 
 inline ComponentStorageInterface::~ComponentStorageInterface() {}

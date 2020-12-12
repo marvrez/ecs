@@ -55,31 +55,6 @@ private:
     Registry& m_registry;
 };
 
-// Helper class for easier entities construction.
-// Registry returns EntityBuilder as a result of CreateEntity method, which conveniently allows for chain-calls.
-// E.g., registry.CreateEntity().AddComponent<Foo>().AddComponent<Bar>().Build();
-class EntityBuilder {
-public:
-	EntityBuilder(EntityBuilder&) = delete;
-	EntityBuilder& operator=(EntityBuilder&) = delete;
-
-	// Add component of a given type.
-	template <typename ComponentT>
-	EntityBuilder& AddComponent();
-
-	// Build entity (i.e., return its id).
-	Entity Build() const noexcept { return m_entity; }
-private:
-	// Only Registry can create EntityBuiler's.
-	EntityBuilder(Entity entity, Registry& registry) noexcept : m_entity(entity), m_registry(registry) {}
-
-	// Entity of interest.
-	Entity m_entity = INVALID_ENTITY;
-	Registry& m_registry;
-
-	friend class Registry;
-};
-
 template <typename F>
 inline EntityManager& EntityManager::FilterInPlace(F&& f)
 {
